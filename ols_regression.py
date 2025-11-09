@@ -12,12 +12,16 @@ Run:
 from pathlib import Path
 from typing import List, Tuple
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import statsmodels.api as sm
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.stats.diagnostic import acorr_ljungbox
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 
 DATA_FILE = Path("Oil_Model_Weekly_Core.csv")
+OUTPUT_DIR = Path("ols_diagnostics")
 
 # Predictors chosen for a trader-friendly, interpretable model
 # (all series are already standardized in the core dataset).
@@ -90,6 +94,64 @@ def compute_vif(X: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(vif_data).sort_values("VIF", ascending=False)
 
 
+def ensure_output_dir(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+
+
+def save_residual_plots(model: sm.regression.linear_model.RegressionResultsWrapper) -> None:
+    ensure_output_dir(OUTPUT_DIR)
+    resid = model.resid
+    fitted = model.fittedvalues
+
+    plt.figure(figsize=(10, 4))
+    plt.plot(resid, color="steelblue", linewidth=0.7)
+    plt.title("OLS Residuals (time series)")
+    plt.ylabel("Residual")
+    plt.xlabel("Observation")
+    plt.tight_layout()
+    plt.savefig(OUTPUT_DIR / "residuals_timeseries.png", dpi=150)
+    plt.close()
+
+    plt.figure(figsize=(6, 4))
+    plt.scatter(fitted, resid, s=10, color="darkorange", alpha=0.6)
+    plt.axhline(0, color="gray", linewidth=1, linestyle="--")
+    plt.title("Residuals vs Fitted")
+    plt.xlabel("Fitted values")
+    plt.ylabel("Residuals")
+    plt.tight_layout()
+    plt.savefig(OUTPUT_DIR / "residuals_vs_fitted.png", dpi=150)
+    plt.close()
+
+    plt.figure(figsize=(6, 4))
+    plt.hist(resid, bins=40, color="slateblue", edgecolor="white", alpha=0.85)
+    plt.title("Residual histogram")
+    plt.xlabel("Residual")
+    plt.ylabel("Frequency")
+    plt.tight_layout()
+    plt.savefig(OUTPUT_DIR / "residuals_hist.png", dpi=150)
+    plt.close()
+
+
+def save_acf_pacf(resid: pd.Series, lags: int = 24) -> None:
+    ensure_output_dir(OUTPUT_DIR)
+    fig, ax = plt.subplots(2, 1, figsize=(8, 6))
+    plot_acf(resid, lags=lags, ax=ax[0])
+    ax[0].set_title(f"Residual ACF (lags 1–{lags})")
+    plot_pacf(resid, lags=lags, ax=ax[1], method="ywm")
+    ax[1].set_title(f"Residual PACF (lags 1–{lags})")
+    fig.tight_layout()
+    fig.savefig(OUTPUT_DIR / "residuals_acf_pacf.png", dpi=150)
+    plt.close(fig)
+
+
+def run_ljung_box(resid: pd.Series, lags: List[int]) -> pd.DataFrame:
+    lb = acorr_ljungbox(resid, lags=lags, return_df=True)
+    lb.index.name = "lag"
+    lb.reset_index(inplace=True)
+    lb.rename(columns={"lb_stat": "LB stat", "lb_pvalue": "p-value"}, inplace=True)
+    return lb
+
+
 def main():
     df = load_data(DATA_FILE)
     y, X, used_predictors, missing_predictors = prepare_design(
@@ -115,9 +177,16 @@ def main():
     vif_table = compute_vif(X)
     print(vif_table.to_string(index=False, float_format=lambda v: f"{v:6.2f}"))
 
-    print("\nReminder: Inspect residual plots and run diagnostic tests as needed.")
-    print("Consider adjusting CANDIDATE_PREDICTORS if VIFs are excessive or")
-    print("if trader feedback suggests a leaner feature set.")
+    save_residual_plots(model)
+    save_acf_pacf(model.resid)
+    lb_table = run_ljung_box(model.resid, lags=[4, 8, 12, 24])
+
+    print("\nLjung-Box test on residuals:")
+    print(lb_table.to_string(index=False, float_format=lambda v: f"{v:8.4f}"))
+
+    print(f"\nDiagnostic plots saved to: {OUTPUT_DIR.resolve()}")
+    print("Review residual shape, serial correlation, and Ljung-Box p-values.")
+    print("Consider robust errors or feature tweaks if diagnostics flag issues.")
 
 
 if __name__ == "__main__":
