@@ -101,15 +101,19 @@ def expanding_ols_forecast(df: pd.DataFrame, target: str, Xcols: List[str], spli
         if trn.empty:
             preds.append(np.nan); idxs.append(df.index[t]); continue
         y = trn[target].values
-        X = sm.add_constant(trn[Xcols].values, has_constant='add')
+        X_train = trn[Xcols]
+        train_means = X_train.mean()
+        train_stds = X_train.std(ddof=0).replace(0, 1)
+        X_train_std = (X_train - train_means) / train_stds
+        X = sm.add_constant(X_train_std.values, has_constant='add')
         mdl = sm.OLS(y, X).fit()
         # Ensure testX has the same columns and handle NaNs
-        testX_clean = testX[Xcols].copy()
-        # Fill NaNs with mean from training data if needed
+        testX_clean = testX.copy()
         for col in Xcols:
             if pd.isna(testX_clean[col].iloc[0]):
-                testX_clean[col].iloc[0] = trn[col].mean()
-        X_test = sm.add_constant(testX_clean.values, has_constant='add')
+                testX_clean[col].iloc[0] = train_means[col]
+        testX_std = (testX_clean - train_means) / train_stds
+        X_test = sm.add_constant(testX_std.values, has_constant='add')
         pred = float(mdl.predict(X_test)[0])
         preds.append(pred); idxs.append(df.index[t])
     return pd.Series(preds, index=idxs, name="ols_pred")

@@ -44,7 +44,8 @@ OUT_MODEL = Path("Oil_Model_Weekly_Core.csv")
 STATIONARITY_MAX_MISS = 0.10  # drop predictors with >10% NA post-transform
 Z_SCORE_STN = True            # z-score stationarity-ready predictors
 MODEL_LAGS = 4                # cl1_ret AR lags
-STANDARDIZE_MODEL_PRED = True # z-score predictors in model dataset
+MODEL_EXOG_LAG = 1            # shift exogenous predictors by 1 week for forecasting
+STANDARDIZE_MODEL_PRED = False # optional z-score (applied after lagging if enabled)
 # ------------------------------------------------
 
 
@@ -273,13 +274,23 @@ def build_model_core(clean_df: pd.DataFrame) -> pd.DataFrame:
         if col in clean_df.columns:
             model[col] = clean_df[col]
 
-    # Drop NA from lags/diffs
+    # Shift exogenous predictors to avoid look-ahead bias (weekly data released after period end)
+    exog_cols = [
+        c for c in model.columns
+        if c != "cl1_ret" and not c.startswith("cl1_ret_l")
+    ]
+    if MODEL_EXOG_LAG > 0:
+        model[exog_cols] = model[exog_cols].shift(MODEL_EXOG_LAG)
+
+    # Drop NA introduced by lags/diffs/shifts
     model = model.dropna()
 
-    # Standardize predictors (not the target)
+    # Optional: standardize predictors (not the target) after lagging
     if STANDARDIZE_MODEL_PRED:
         pred_cols = [c for c in model.columns if c != "cl1_ret"]
-        model[pred_cols] = (model[pred_cols] - model[pred_cols].mean()) / model[pred_cols].std(ddof=0)
+        model_mean = model[pred_cols].mean()
+        model_std = model[pred_cols].std(ddof=0).replace(0, 1)
+        model[pred_cols] = (model[pred_cols] - model_mean) / model_std
 
     return model
 

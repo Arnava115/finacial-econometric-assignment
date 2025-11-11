@@ -10,9 +10,10 @@ Run:
 """
 
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
@@ -22,6 +23,7 @@ from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 DATA_FILE = Path("Oil_Model_Weekly_Core.csv")
 OUTPUT_DIR = Path("ols_diagnostics")
+TEST_FRAC = 0.20  # Fraction of data to use for out-of-sample testing
 
 # Predictors chosen for a trader-friendly, interpretable model
 # (all series are already standardized in the core dataset).
@@ -39,11 +41,11 @@ CANDIDATE_PREDICTORS: List[str] = [
     # Weekly oil fundamentals
     "weekly_change_in_crude_stock_diff",
     # "weekly_rig_count_diff",
-    "weekly_prod_crude_diff",
+    # "weekly_prod_crude_diff",
     # "bdiy_index_ret",
     # "weekly_commercial_long_diff",
     # "weekly_commercial_short_diff", #because both are included in the total open interest
-    "weekly_total_open_interest_diff",
+    # "weekly_total_open_interest_diff",
     # Macro sentiment & rates
     # "3m_yield_diff",
     # "10y_yield_diff",
@@ -152,6 +154,120 @@ def run_ljung_box(resid: pd.Series, lags: List[int]) -> pd.DataFrame:
     return lb
 
 
+def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
+    """Compute RMSE, MAE, HitRate, TheilU."""
+    err = y_true - y_pred
+    rmse = float(np.sqrt(np.mean(err ** 2)))
+    mae = float(np.mean(np.abs(err)))
+    hit_rate = float(np.mean(np.sign(y_true) == np.sign(y_pred)))
+    rmse_naive = float(np.sqrt(np.mean(y_true ** 2)))
+    theil_u = rmse / rmse_naive if rmse_naive > 0 else np.nan
+    return {
+        "RMSE": rmse,
+        "MAE": mae,
+        "HitRate": hit_rate,
+        "TheilU": theil_u,
+    }
+
+
+def compute_pnl(y_true: pd.Series, y_pred: pd.Series) -> Dict[str, float]:
+    """Toy P&L: long if forecast > 0, else flat."""
+    pos = (y_pred > 0).astype(float)
+    ret = pos * y_true
+    sharpe = (
+        (ret.mean() / ret.std()) * np.sqrt(52) if ret.std() > 0 else np.nan
+    )
+    return {
+        "AnnRet(approx)": float(ret.mean() * 52),
+        "AnnVol(approx)": float(ret.std() * np.sqrt(52)),
+        "Sharpe(approx)": float(sharpe),
+        "CumulativeRet": float(ret.sum()),
+    }
+
+
+def expanding_ols_forecast(
+    df: pd.DataFrame, target: str, predictors: List[str], split_idx: int
+) -> pd.Series:
+    """Expanding-window OLS forecast: refit on [0:t) to predict t."""
+    preds = []
+    idxs = []
+    
+    for t in range(split_idx, len(df)):
+        train = df.iloc[:t]
+        test_row = df.iloc[[t]]
+        
+        # Prepare training data
+        trn = train.dropna(subset=[target] + predictors)
+        if trn.empty or len(trn) < len(predictors) + 2:
+            preds.append(np.nan)
+            idxs.append(df.index[t])
+            continue
+        
+        # Standardize predictors using training sample only
+        y_trn = trn[target].values
+        X_trn = trn[predictors].copy()
+        train_means = X_trn.mean()
+        train_stds = X_trn.std(ddof=0).replace(0, 1)
+        X_trn_std = (X_trn - train_means) / train_stds
+        X_trn_const = sm.add_constant(X_trn_std.values, has_constant='add')
+        
+        # Fit model
+        try:
+            mdl = sm.OLS(y_trn, X_trn_const).fit()
+        except:
+            preds.append(np.nan)
+            idxs.append(df.index[t])
+            continue
+        
+        # Prepare test data (standardize using training stats)
+        X_test = test_row[predictors].copy()
+        X_test = X_test.fillna(train_means)
+        X_test_std = (X_test - train_means) / train_stds
+        X_test_const = sm.add_constant(X_test_std.values, has_constant='add')
+        
+        # Predict
+        try:
+            pred = float(mdl.predict(X_test_const)[0])
+        except:
+            pred = np.nan
+        
+        preds.append(pred)
+        idxs.append(df.index[t])
+    
+    return pd.Series(preds, index=idxs, name="ols_pred")
+
+
+def expanding_ar1_forecast(df: pd.DataFrame, target: str, split_idx: int) -> pd.Series:
+    """Expanding-window AR(1) forecast."""
+    tmp = df[[target]].copy()
+    tmp["lag1"] = tmp[target].shift(1)
+    
+    preds, idxs = [], []
+    for t in range(split_idx, len(tmp)):
+        trn = tmp.iloc[:t].dropna()
+        if trn.empty:
+            preds.append(np.nan)
+            idxs.append(tmp.index[t])
+            continue
+        
+        y_trn = trn[target].values
+        X_trn = sm.add_constant(trn[["lag1"]].values, has_constant='add')
+        mdl = sm.OLS(y_trn, X_trn).fit()
+        
+        x_test = tmp.iloc[[t]][["lag1"]].fillna(trn["lag1"].mean())
+        x_test_const = sm.add_constant(x_test.values, has_constant='add')
+        
+        try:
+            pred = float(mdl.predict(x_test_const)[0])
+        except:
+            pred = np.nan
+        
+        preds.append(pred)
+        idxs.append(tmp.index[t])
+    
+    return pd.Series(preds, index=idxs, name="ar1_pred")
+
+
 def main():
     df = load_data(DATA_FILE)
     y, X, used_predictors, missing_predictors = prepare_design(
@@ -187,6 +303,76 @@ def main():
     print(f"\nDiagnostic plots saved to: {OUTPUT_DIR.resolve()}")
     print("Review residual shape, serial correlation, and Ljung-Box p-values.")
     print("Consider robust errors or feature tweaks if diagnostics flag issues.")
+    
+    # ========== OUT-OF-SAMPLE EVALUATION ==========
+    print("\n" + "=" * 72)
+    print("OUT-OF-SAMPLE EVALUATION (Expanding Window)")
+    print("=" * 72)
+    
+    target = "cl1_ret"
+    split_idx = int((1 - TEST_FRAC) * len(df))
+    y_test = df[target].iloc[split_idx:]
+    
+    # Naive forecast (always 0)
+    naive_pred = pd.Series(0.0, index=y_test.index, name="naive_pred")
+    
+    # AR(1) forecast
+    ar1_pred = expanding_ar1_forecast(df, target, split_idx)
+    
+    # OLS forecast with final predictor set
+    ols_pred = expanding_ols_forecast(df, target, used_predictors, split_idx)
+    
+    # Align all predictions
+    valid_idx = y_test.dropna().index.intersection(
+        naive_pred.dropna().index.intersection(
+            ar1_pred.dropna().index.intersection(ols_pred.dropna().index)
+        )
+    )
+    
+    if len(valid_idx) == 0:
+        print("⚠️  No valid predictions after alignment. Check data.")
+        return
+    
+    y_test_aligned = y_test.loc[valid_idx]
+    naive_aligned = naive_pred.loc[valid_idx]
+    ar1_aligned = ar1_pred.loc[valid_idx]
+    ols_aligned = ols_pred.loc[valid_idx]
+    
+    # Compute metrics for each model
+    results = []
+    for name, pred in [
+        ("Naive", naive_aligned),
+        ("AR(1)", ar1_aligned),
+        ("OLS(final)", ols_aligned),
+    ]:
+        m = compute_metrics(y_test_aligned.values, pred.values)
+        pnl = compute_pnl(y_test_aligned, pred)
+        results.append({
+            "Model": name,
+            **m,
+            **pnl,
+            "N_test": len(valid_idx),
+        })
+    
+    results_df = pd.DataFrame(results).set_index("Model")
+    print("\n=== Out-of-Sample Performance ===")
+    print(results_df.round(4).to_string())
+    
+    # Save results
+    oos_file = OUTPUT_DIR / "oos_results.csv"
+    ensure_output_dir(OUTPUT_DIR)
+    results_df.to_csv(oos_file)
+    print(f"\nSaved OOS results to: {oos_file.resolve()}")
+    
+    # Show tail of predictions
+    tail_df = pd.DataFrame({
+        "y_true": y_test_aligned.tail(10),
+        "naive": naive_aligned.tail(10),
+        "ar1": ar1_aligned.tail(10),
+        "ols": ols_aligned.tail(10),
+    })
+    print("\nTail of test set predictions:")
+    print(tail_df.round(5).to_string())
 
 
 if __name__ == "__main__":
