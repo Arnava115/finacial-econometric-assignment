@@ -1,0 +1,11 @@
+\begin{tabular}{lrrlrllrrr}
+\toprule
+{} &   RMSE &    MAE & Hit Rate &  Theil U & Ann. Return & Ann. Volatility &  Sharpe Ratio &  Cum. Return &    N \\
+Model      &        &        &          &          &             &                 &               &              &      \\
+\midrule
+Naive      & 0.0636 & 0.0440 &     0.0\% &   1.0000 &        0.0\% &            0.0\% &           NaN &       0.0000 &  307 \\
+AR(1)      & 0.0639 & 0.0440 &    52.8\% &   1.0045 &      -11.3\% &           41.4\% &       -0.2700 &      -0.6647 &  307 \\
+OLS(final) & 0.0634 & 0.0439 &    51.8\% &   0.9966 &       10.8\% &           31.3\% &        0.3500 &       0.6394 &  307 \\
+ARIMAX     & 0.0633 & 0.0440 &    51.8\% &   0.9943 &       13.7\% &           30.9\% &        0.4400 &       0.8067 &  307 \\
+\bottomrule
+\end{tabular}

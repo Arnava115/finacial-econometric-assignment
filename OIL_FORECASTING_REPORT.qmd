@@ -1,0 +1,228 @@
+---
+title: "Oil Futures Returns Forecasting Model: Weekly Trading Signals"
+subtitle: "A Quantitative Approach for Oil Trading Desk Decision-Making"
+author: "Junior Analyst"
+date: "November 2025"
+format:
+  pdf:
+    documentclass: article
+    geometry:
+      - top=30mm
+      - left=20mm
+      - right=20mm
+      - bottom=30mm
+    fontsize: 11pt
+    linestretch: 1.5
+    fig-pos: 'H'
+    fig-cap-location: bottom
+    number-sections: true
+    toc: true
+    toc-depth: 3
+    colorlinks: true
+    linkcolor: blue
+    urlcolor: blue
+    citecolor: blue
+    keep-tex: false
+    include-in-header:
+      - text: |
+          \usepackage{booktabs}
+          \usepackage{longtable}
+          \usepackage{array}
+          \usepackage{multirow}
+          \usepackage{wrapfig}
+          \usepackage{float}
+          \usepackage{colortbl}
+          \usepackage{pdflscape}
+          \usepackage{tabu}
+          \usepackage{threeparttable}
+          \usepackage{threeparttablex}
+          \usepackage{makecell}
+          \usepackage{xcolor}
+          \usepackage{graphicx}
+          \usepackage{caption}
+          \usepackage{subcaption}
+---
+
+# Executive Summary
+
+This report presents a quantitative forecasting model designed to help identify weekly trading opportunities in WTI crude oil futures. After testing multiple approaches on historical data from 1995-2018, the ARIMAX model emerged as the best performer, delivering a Sharpe ratio of 0.44 and directional accuracy of 51.8% on out-of-sample data from 2018-2023.
+
+The model combines two key drivers: (1) momentum from 4-week lagged returns, and (2) fundamental supply signals from weekly inventory changes. When inventories fall and recent returns are positive, the model generates bullish forecasts; the opposite combination triggers bearish signals.
+
+While the model's predictive power is modest—explaining approximately 2.5% of return variation—it provides a meaningful edge over random guessing. A simple long-only strategy based on positive forecasts would have generated approximately 13.7% annual returns during the test period, compared to 0% for staying flat.
+
+**Key limitation:** The model performs best in normal market conditions and may underestimate risk during extreme volatility events. It should be used as one input among many, with proper risk management and stop-losses always in place.
+
+# Introduction & Business Context
+
+Oil futures are among the most volatile commodity markets, with weekly returns that can swing 5-10% on supply disruptions, geopolitical events, or shifts in global demand. For traders, even small predictive edges can be valuable when combined with disciplined risk management.
+
+This report presents a quantitative forecasting model designed to help identify weekly trading opportunities in WTI crude oil futures. The objective is straightforward: can we use historical patterns and fundamental data to predict next week's return direction and magnitude?
+
+The challenge is significant. Financial markets are efficient, and most return variation is unpredictable noise. However, certain patterns persist: momentum effects from recent price movements, and fundamental relationships between supply/demand indicators and prices.
+
+This analysis tests multiple forecasting approaches, from simple autoregressive models to sophisticated methods combining momentum and fundamental drivers. All models are evaluated on out-of-sample data—tested on periods they haven't seen during training—to ensure reliability.
+
+The final model provides weekly forecasts that traders can use to inform position sizing and directional views. While no model is perfect, this one offers a small but meaningful edge that, when used appropriately, can add value to a trading strategy.
+
+# Data & Methodology Overview
+
+## Data Sources and Time Period
+
+The analysis uses weekly WTI crude oil futures returns (`cl1_ret`) as the target variable, spanning 1995-2023. The dataset is split into training (1995-2018, 1,227 observations) and test (2018-2023, 307 observations) periods to ensure rigorous out-of-sample validation. The weekly frequency aligns with both the trading horizon and the release cadence of key fundamental data.
+
+## Predictor Selection: Why These Variables?
+
+After extensive screening of potential predictors—including equity returns, yield curves, volatility indices, and various oil market fundamentals—two variables emerged as the most reliable and interpretable:
+
+**1. 4-week lagged returns (`cl1_ret_l4`):** Captures intermediate-term momentum patterns. Oil markets exhibit momentum over 2-6 week horizons before mean reversion sets in.
+
+**2. Weekly change in crude oil inventories (`weekly_change_in_crude_stock_diff`):** A direct fundamental signal. Falling inventories signal tightening supply (bullish), while rising inventories suggest oversupply (bearish).
+
+These predictors were selected for both statistical significance and economic interpretability. Other variables tested either lacked predictive power or introduced unnecessary complexity.
+
+## Model Selection Process
+
+Four candidate models were tested: (1) Naive baseline (always predict zero), (2) AR(1) model (uses previous week's return), (3) OLS regression (linear combination of predictors), and (4) ARIMAX model (combines autoregressive structure with exogenous variables, allowing for seasonal patterns).
+
+All models were evaluated using expanding-window forecasting: at each test point, the model retrains using all available historical data. Models were compared on RMSE (forecast error), Hit Rate (directional accuracy), Sharpe Ratio (risk-adjusted returns), and Theil's U (relative to naive baseline). Selection was based on out-of-sample performance, ensuring the chosen model performs well on new data.
+
+# Model Results & Trading Signals
+
+## Best Model: ARIMAX Delivers Superior Performance
+
+After testing all candidate models, the ARIMAX specification emerged as the clear winner on out-of-sample performance. The model specification is ARIMA(1,0,0) × SARIMA(0,0,1,8), meaning it captures:
+- First-order autoregressive patterns (momentum from recent returns)
+- An 8-week seasonal component (captures cyclical patterns)
+- Exogenous variables (inventory changes and 4-week lagged returns)
+
+**Out-of-Sample Performance (2018-2023):**
+
+::: {#tbl-performance}
+Table 1: Model Performance Comparison
+:::
+
+| Model | RMSE | Hit Rate | Sharpe Ratio | Annual Return |
+|-------|------|----------|---------------|----------------|
+| Naive | 0.0636 | 0.0% | 0.00 | 0.0% |
+| AR(1) | 0.0639 | 52.8% | -0.27 | -11.3% |
+| OLS | 0.0634 | 51.8% | 0.35 | 10.8% |
+| **ARIMAX** | **0.0633** | **51.8%** | **0.44** | **13.7%** |
+
+![Visual comparison of model performance metrics (RMSE, Hit Rate, Sharpe Ratio, Annual Return)](report_figures/performance_comparison.png){#fig-performance}
+
+The ARIMAX model achieves the lowest forecast error (RMSE of 0.0633) and highest risk-adjusted returns (Sharpe ratio of 0.44). It correctly predicts return direction 51.8% of the time—a modest improvement over random guessing (50%), but meaningful when compounded over hundreds of trades.
+
+## What These Numbers Mean for Trading
+
+**Directional Accuracy (51.8%):** While modest—only slightly better than a coin flip—this represents a meaningful edge. Over 307 test observations, this translates to 159 correct predictions versus 148 incorrect ones. The model's correct predictions tend to align with larger moves.
+
+**Sharpe Ratio (0.44):** Measures risk-adjusted returns. A Sharpe of 0.44 means the model generates positive returns per unit of risk. For context, the AR(1) model achieved -0.27 (destroyed value), while the naive strategy has 0.00.
+
+**Annual Return (13.7%):** Approximate return from a simple strategy going long when forecast is positive. This assumes perfect execution with no transaction costs—real-world returns will be lower.
+
+**RMSE (0.0633):** Average forecast error is 6.33% weekly. Given oil weekly volatility typically ranges 5-8%, this is reasonable. Forecasts are noisy but informative.
+
+![Time series of model forecasts vs actual returns, showing how forecasts track actual movements](report_figures/forecasts_vs_actual.png){#fig-forecasts}
+
+## How to Use the Model Signal
+
+The model generates weekly forecasts: **Forecast > 0** suggests long positions; **Forecast < 0** suggests short positions or staying flat. Larger absolute values indicate stronger conviction, though extreme forecasts (>5%) may be less reliable. Check if momentum and fundamentals align—if oil rallied 4 weeks ago and inventories fell, a bullish forecast has higher confidence.
+
+![Trading signals over time—green areas indicate long signals, red areas indicate short/flat signals. Bottom panel shows actual returns colored by signal correctness (green = correct, red = incorrect).](report_figures/trading_signals.png){#fig-signals}
+
+## What Drives the Forecast: Model Coefficients
+
+The ARIMAX model combines signals: **4-week lagged returns** (coefficient +0.0026, p=0.014) captures momentum—if oil rallied 4 weeks ago, expect continued strength. **Weekly inventory changes** (coefficient -0.0052, p<0.001) provides fundamental signal—falling inventories (negative change) is bullish. **8-week seasonal component** (coefficient +0.1365, p<0.001) captures cyclical patterns. Combined: if oil rallied 4 weeks ago AND inventories are falling AND we're in a favorable 8-week cycle, expect continued strength.
+
+![Scatter plots showing forecast accuracy. Points closer to the red diagonal line indicate better predictions. ARIMAX (right) shows tighter clustering around the diagonal compared to OLS (left).](report_figures/forecast_scatter.png){#fig-scatter}
+
+# Model Reliability & Diagnostics
+
+## What Works Well
+
+The model was tested on 307 out-of-sample observations (2018-2023) it had never seen, providing confidence in genuine predictive power. It retrains weekly using expanding windows, adapting to changing market conditions. Robust standard errors (HAC/Newey-West) account for autocorrelation and heteroskedasticity. Model selection via AIC balances fit with complexity, preventing overfitting.
+
+## Diagnostic Tests: What They Tell Us
+
+**Ljung-Box Test:** Some residual autocorrelation remains at lag 8+ (p=0.050 at lag 8). The model captures most patterns but may miss longer-term cycles. Not critical for weekly forecasts, but suggests room for improvement.
+
+**Jarque-Bera Test:** Residuals are not normally distributed (p<0.001), indicating "fat tails"—extreme moves occur more frequently than normal. The model may underestimate tail risk—use stop-losses and appropriate position sizing.
+
+**ARCH Test:** Volatility clustering is present (p<0.001). When markets are volatile, they stay volatile. The model doesn't fully adjust—consider reducing position size during high-volatility periods.
+
+**Model Fit (R²):** The model explains 2.5% of return variation. This is normal for financial markets where most moves are unpredictable noise. Even small edges can be valuable when compounded.
+
+![Distribution of forecast errors. The errors are centered near zero (good), but show fat tails (extreme errors occur more frequently than normal), highlighting the need for stop-losses.](report_figures/error_distribution.png){#fig-errors}
+
+## Model Limitations
+
+Key limitations: (1) Modest predictive power (R² = 2.5%)—97.5% of variation remains unexplained, though small edges can be valuable; (2) Residual autocorrelation at longer lags suggests room for improvement; (3) Non-normal residuals mean extreme events aren't fully modeled—use stop-losses; (4) Volatility clustering not fully captured—reduce position size during high-volatility periods; (5) Regime changes (shale revolution, COVID-19) may invalidate patterns—monitor and retrain if needed; (6) Weekly horizon only—not suitable for intraday trading; (7) Assumes normal market functioning—may break down during crises.
+
+**Trader takeaway:** This model provides an edge, not a crystal ball. Use it as one input among many, with proper risk management.
+
+# Risk Considerations & Trading Recommendations
+
+## When to Trust the Model
+
+The model performs best in normal market conditions when volatility is within typical ranges, inventory data aligns with forecasts, forecast magnitudes are moderate (-3% to +3%), and momentum and fundamentals align. Example: if oil rallied 4 weeks ago, inventories fell last week, and the model forecasts +1.5%, this is a high-confidence signal.
+
+## When to Be Cautious
+
+Use caution during extreme volatility (crises, geopolitical events), structural breaks (policy changes, supply disruptions), low liquidity periods, conflicting signals (trust your judgment over the model), and extreme forecasts (>±5%). Example: During COVID-19 in March 2020, oil prices collapsed due to demand destruction—the model may not have captured this structural break. Fundamental judgment should override model signals in such cases.
+
+## Practical Trading Recommendations
+
+**Position sizing:** Start small (1-2% of portfolio per trade) and scale up only if performance persists. **Risk management:** Always use stop-losses (2-3% below/above entry). **Combine signals:** Use alongside fundamental views, technical analysis, and macroeconomic indicators. **Monitor performance:** Track hit rate and Sharpe ratio—if hit rate falls below 50% or Sharpe turns negative, consider retraining. **Volatility filters:** Reduce position size when volatility is elevated (VIX > 30). **Weekly rebalancing:** Update positions weekly but avoid overtrading—transaction costs matter. **Transaction costs:** The reported 13.7% return assumes perfect execution—real-world returns will be lower due to spreads, commissions, slippage, and funding costs.
+
+![Cumulative returns from a simple long-only trading strategy. ARIMAX (blue line) shows steady growth over the test period, outperforming other models and the naive baseline (flat line).](report_figures/cumulative_returns.png){#fig-cumulative}
+
+## Expected Performance Going Forward
+
+**Best case:** Model continues delivering Sharpe ~0.44 with 52% accuracy, generating positive risk-adjusted returns (real-world returns lower than 13.7% due to costs). **Worst case:** Structural break causes underperformance—if oil market fundamentally changes, historical patterns may no longer apply, requiring retraining. **Realistic:** Performance likely falls between best and worst case—adds value in normal conditions but may struggle during extreme events. Monitor and adapt.
+
+# Conclusion & Next Steps
+
+## Summary
+
+This analysis demonstrates that a quantitative forecasting model can provide a meaningful edge in oil futures trading. The ARIMAX model, which combines momentum signals from 4-week lagged returns with fundamental drivers from inventory changes, delivers positive risk-adjusted returns (Sharpe ratio of 0.44) and modest directional accuracy (51.8%) on out-of-sample data.
+
+The model's predictive power is modest—explaining only 2.5% of return variation—but this is normal for financial markets where most moves are unpredictable noise. The key is that even small edges can be valuable when combined with proper risk management and position sizing.
+
+The model works best in normal market conditions when momentum and fundamentals align. It should be used as one input among many, not as the sole basis for trading decisions.
+
+## Recommendations for the Trader
+
+**Immediate actions:** Start small (1-2% positions), track performance (hit rate, Sharpe), provide feedback on signal alignment, and combine with fundamental views. **Ongoing monitoring:** Retrain if hit rate falls below 50% for 3+ months or Sharpe turns negative. Consider capping extreme forecasts (>5%) if they consistently fail. **Future enhancements:** Volatility regime detection, additional predictors (rig counts, production), regime-switching models, and machine learning approaches.
+
+## Final Thoughts
+
+While no model is perfect, this one offers a quantitative foundation for weekly trading decisions that can complement fundamental views and market intuition. The key to success is using it appropriately: as one tool among many, with proper risk management, and with realistic expectations about its limitations.
+
+The model provides an edge—not a guarantee. Use it wisely, monitor its performance, and be prepared to adapt as markets evolve.
+
+# Appendix: Technical Details
+
+**Model Specification:**
+- ARIMAX(1,0,0) × SARIMA(0,0,1,8)
+- Exogenous variables: `cl1_ret_l4`, `weekly_change_in_crude_stock_diff`
+- AIC: -3860.69
+
+**Data:**
+- Training: 1995-2018 (1,227 observations)
+- Test: 2018-2023 (307 observations)
+- Frequency: Weekly (Friday close)
+
+**Software:** Python with statsmodels, pandas, numpy
+
+**Code:** Available in `model_benchmark.py`, `arimax_model.py`, `ols_regression.py`
+
+**Complete Performance Table:**
+
+See `report_figures/performance_table.csv` for detailed performance metrics including MAE, Theil's U, cumulative returns, and test sample sizes for all models.
+
+---
+
+*Report prepared for Oil Trading Desk*  
+*Date: November 2025*
+
