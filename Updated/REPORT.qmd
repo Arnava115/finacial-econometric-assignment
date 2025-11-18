@@ -1,7 +1,7 @@
 
 
 
-
+## Abstract 
 ## 1. Introduction
 
 As wannabe junior analysts on an oil trading desk, we were tasked with developing a forecasting model capable of supporting day-to-day trading decisions in the crude oil futures market. In practice traders require signals that are not only statistically grounded, but also transparent, intuitive, and directly actionable. Our objective was therefore twofold: to apply econometric tools rigorously, and to translate the resulting insights into a format suitable for a fast-paced trading environment.
@@ -11,6 +11,38 @@ Next, we present the diagnostic tests—covering stationarity, autocorrelation, 
 Ultimately, our goal is not to identify the “best” forecasting model, but rather to assess which variables contain meaningful predictive information, determine how stable that information is across time, and outline how such signals could inform a simple and realistic trading rule. The results presented here are therefore designed to be both econometrically sound and operationally useful for a trader seeking to form expectations about near-term oil futures returns.
 
 ## 2. Methodology
+
+### 2.6 General to specific model framework 
+The modelling process follows the General-to-Specific (GETS) approach, which begins with a broad specification and progressively removes weak or invalid oredictiors to obtain a parsimonious and economically interpretable model. 
+
+### 2.7 General Unrestricted Model (GUM) 
+A GUM is first specified using all predictors available in the in-sample dataset after the INS/OOS split. This ensures every plausible variable is initially considered.
+
+### 2.8 OLS on the GUM 
+An OLS model is estimated using the full GUM to establish a baseline and reveal early issues such as insignificance, multicollinearity, or serial correlation.
+
+### 2.9 LASSO
+LASSO is applied to the same predictor set to shrink weak coefficients and remove low-value predictors. Variables selected by LASSO are carried forward.
+
+### Fundamental (Economic) Screening
+LASSO-selected variables are then filtered using economic theory. Only predictors with clear relevance to oil markets.
+
+### Diagnostics and Model Refinement
+A structured diagnostic sequence is then applied in the following order:
+functional form → autocorrelation → heteroskedasticity → normality → multicollinearity → stationarity → structural breaks.
+This order is used because each test depends on assumptions verified in the previous step, allowing any violations to be systematically corrected. 
+
+### Final OLS 
+The final OLS model is then estimated using the fully refined predictor set, prodcusing the specification for forecasting.  
+
+### Model Comparison
+Alternative models (ARIMA, ARIMAX)  are then estimated and evaluated using standard metrics to benchmark predictive performance. 
+
+### Model Selection
+The final forecasting model is selected based on comparative accuracy across evaluation metrics and the interpretability of the underlying specification, ensuring both statistical robustness and economic relevance.
+
+
+
 
 
 ## 3. Results
