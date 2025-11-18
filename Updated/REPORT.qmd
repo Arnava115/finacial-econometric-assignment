@@ -47,3 +47,11 @@ The final forecasting model is selected based on comparative accuracy across eva
 
 ## 3. Results
 
+### 3.1 Overview of the models
+### 3.2 In-sample performance and interpretation
+### 3.3 Diagnostic Test results
+### 3.4 Out-of-sample forecast performance
+### 3.5 Signal quality and economic interpretation
+### 3.6 Identifying a trading opportunity
+### 3.7 Limitations and sources of uncertainty
+
