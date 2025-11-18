@@ -49,6 +49,14 @@ The final forecasting model is selected based on comparative accuracy across eva
 
 ### 3.1 Overview of the models
 
+We began with a Generalised Unrestricted Model including all 25 predictors. The model showed limited explanatory power (adjusted R² of 4.5%) and many insignificant coefficients, indicating clear overfitting. 
+{{{table}}}
+
+To reduce dimensionality, we applied LASSO with cross-validation, which selected 16 variables. After applying an economic filter, we retained six predictors that were both statistically relevant and theoretically justified. Re-estimating the model with this reduced set produced a more parsimonious and interpretable specification, with an adjusted R² of 3.9%, consistent with the difficulty of forecasting daily oil returns.
+{{{table}}}
+
+
+
 
 ### 3.2 In-sample performance and interpretation
 ### 3.3 Diagnostic Test results
