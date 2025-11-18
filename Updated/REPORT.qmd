@@ -2,15 +2,28 @@
 
 
 ## Abstract 
+
 ## 1. Introduction
 
-As wannabe junior analysts on an oil trading desk, we were tasked with developing a forecasting model capable of supporting day-to-day trading decisions in the crude oil futures market. In practice traders require signals that are not only statistically grounded, but also transparent, intuitive, and directly actionable. Our objective was therefore twofold: to apply econometric tools rigorously, and to translate the resulting insights into a format suitable for a fast-paced trading environment.
-Forecasting oil prices is intrinsically challenging due to the market’s sensitivity to macroeconomic conditions, inventory dynamics, geopolitical risk, and broader financial cycles. Nevertheless, even modest predictive models when clearly interpreted can provide valuable context for position-taking, hedging, and risk management. 
-In the remainder of this report, we outline the key steps in our modelling approach. We begin by the simple trading strategy that motivated our analysis, which helped clarify the scope of our forecasting model. This led to selecting an economically meaningful dependent variable and an appropriate data frequency that aligns with practical trading horizons. We then summarise the econometric methodology used to build the model and the reasoning behind our specification choices.
-Next, we present the diagnostic tests—covering stationarity, autocorrelation, heteroskedasticity, and parameter stability—to evaluate whether the model satisfies essential assumptions. We assess its reliability through an out-of-sample forecast comparison against a naïve benchmark and highlight both the strengths and limitations revealed by this exercise. Finally, we interpret the model’s output in trading terms, showing how the signals it generates can support directional views, and we conclude by illustrating a specific trading opportunity our model forecast can assist with.
-Ultimately, our goal is not to identify the “best” forecasting model, but rather to assess which variables contain meaningful predictive information, determine how stable that information is across time, and outline how such signals could inform a simple and realistic trading rule. The results presented here are therefore designed to be both econometrically sound and operationally useful for a trader seeking to form expectations about near-term oil futures returns.
+Oil futures are among the most volatile financial markets, with weekly returns often reacting sharply to shifts in inventories, macroeconomic conditions, and geopolitical risk. For traders, even a modest improvement in forecasting accuracy can inform position sizing, timing, and risk management. This report asks a trader-relevant question:
+
+Can historical data and fundamental information be combined to generate reliable, economically interpretable forecasts of next-week WTI front-month returns (CL1_ret)?
+
+To answer this, we adopt a general-to-specific econometric approach. We begin with broad exploratory analysis, select the dependent variable and weekly frequency based on econometric properties and trading relevance, and transform all predictors to ensure stationarity and comparability. A Generalised Unrestricted Model is estimated and progressively simplified through statistical reduction and economic reasoning, followed by a full set of diagnostic checks to ensure robustness. Forecast performance is then assessed against standard benchmark approaches using expanding-window out-of-sample tests. The aim is to identify whether any specification offers stable, practical signals that could support trading decisions in real time.
 
 ## 2. Methodology
+
+## Dependant Variable Selection
+This report forecasts log returns of the front-month WTI futures contract (CL1_ret) after comparing with two alternatives: price levels and the CL2-CL1 spread. Price levels are non-stationary with unit roots. The predictor-price relationships shift across different price regimes, causing model parameters to become unstable over time. The CL2-CL1 spread captures term structure but is less liquid and less directly tradeable. Returns (CL1_ret) are stationary and scale-invariant, ensuring consistent predictor relationships. This stability is essential for reliable forecasting models. Returns also align with how traders assess opportunities and manage risk, making forecasts directly interpretable for position sizing and performance evaluation.
+
+## Frequency Alignment 
+This report uses weekly frequency to balance noise and timeliness. Daily data captures fast movements but carries heavy noise, which weakens the link between predictors and returns and makes models unstable. Monthly data is cleaner but updates slowly and provides few observations, which reduces statistical power and misses market shifts. Weekly data balances these issues. It filters short-term noise while keeping signals responsive. It also supplies enough observations for stable estimation. Moreover, weekly timing matches how traders operate, since oil desks adjust positions after weekly inventory reports. The following models will present forecasts on this same cycle.
+
+## Data Transformation 
+The dataset is transformed to ensure stationarity and consistent weekly timing. Daily price series such as CL1, Brent and stock prices are converted to weekly log returns using Friday closes and the formula log(P_t / P_{t−1}). Weekly variables are kept at their original frequency. Monthly macro variables are forward-filled within each month. Non-price indicators such as yields and VIX are first-differenced to remove trends. All predictors are standardized with z-scores. The model also includes four lags of CL1 returns and applies a one-week lag to all exogenous predictors to maintain correct information timing
+
+## Data split 
+The dataset is split chronologically into 80% in-sample for model estimation and 20% out-of-sample for forecasting evaluation. This prevents lookahead bias by ensuring the model is trained only on past information. All exogenous predictors are shifted by one week so that inputs reflect information available at the time of forecasting.
 
 ### 2.6 General to specific model framework 
 The modelling process follows the General-to-Specific (GETS) approach, which begins with a broad specification and progressively removes weak or invalid oredictiors to obtain a parsimonious and economically interpretable model. 
@@ -36,7 +49,13 @@ This order is used because each test depends on assumptions verified in the prev
 The final OLS model is then estimated using the fully refined predictor set, prodcusing the specification for forecasting.  
 
 ### Model Comparison
-Alternative models (ARIMA, ARIMAX)  are then estimated and evaluated using standard metrics to benchmark predictive performance. 
+To benchmark performance, multiple forecasting approaches are estimated using a rolling-window framework. These include:
+- OLS, a linear econometric benchmark;
+- AR(1), capturing autoregressive and moving-average dynamics;
+- ARIMAX, extending ARIMA by incorporating exogenous predictors;
+- Random Walk, the standard naïve benchmark in financial time series.
+
+All models are evaluated under identical real-time conditions using a consistent rolling-window structure. Forecast accuracy is assessed using RMSE, MAE, MAPE, hit-rate, and Theil’s U, while trading performance is compared using HitRate, Sharpe ratio, Cumulative Return, and Annualised Volatility, providing a comprehensive view of both statistical and financial performance across models.
 
 ### Model Selection
 The final forecasting model is selected based on comparative accuracy across evaluation metrics and the interpretability of the underlying specification, ensuring both statistical robustness and economic relevance.
@@ -52,7 +71,7 @@ The final forecasting model is selected based on comparative accuracy across eva
 We began with a Generalised Unrestricted Model including all 25 predictors. The model showed limited explanatory power (adjusted R² of 4.5%) and many insignificant coefficients, indicating clear overfitting. 
 {{{table}}}
 
-To reduce dimensionality, we applied LASSO with cross-validation, which selected 16 variables. After applying an economic filter, we retained six predictors that were both statistically relevant and theoretically justified. Re-estimating the model with this reduced set produced a more parsimonious and interpretable specification, with an adjusted R² of 3.9%, consistent with the difficulty of forecasting daily oil returns.
+The result of LASSO to reduce dimentionality resulted in 16 variables being selected. After applying an economic filter, we retained six predictors that were both statistically relevant and theoretically justified. Re-estimating the model with this reduced set produced a more parsimonious and interpretable specification, with an adjusted R² of 3.9%, consistent with the difficulty of forecasting daily oil returns.
 {{{table}}}
 
 
