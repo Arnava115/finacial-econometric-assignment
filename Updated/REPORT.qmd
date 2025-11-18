@@ -127,7 +127,21 @@ We conducted a model comparison to assess whether our approach offers any added 
 
 ### 3.5 Signal quality and economic interpretation
 
+From a trading standpoint, the strength of this model is its ability to provide a consistent, directional edge in a market where predictive structure is notoriously limited. Across the out-of-sample period, the model delivers a 55–56% hit rate, which is materially above random and large enough to matter when applied systematically.
+
+**Directional Accuracy (55.7%):** While modest—only slightly better than a coin flip—this represents a meaningful edge. Over 307 test observations, this translates to 171 correct predictions versus 136 incorrect ones. The model's correct predictions tend to align with larger moves.
+
+**Sharpe Ratio (0.56):** Measures risk-adjusted returns. A Sharpe of 0.56 means the model generates positive returns per unit of risk. For context, the AR(1) model achieved -0.27 (destroyed value), while the naive strategy has 0.00.
+
+**Annual Return (18.6%):** Approximate return from a simple strategy going long when forecast is positive. This assumes perfect execution with no transaction costs—real-world returns will be lower.
+
+**RMSE (0.0657):** Average forecast error is 6.57% weekly. Given oil weekly volatility typically ranges 5-8%, this is reasonable. Forecasts are noisy but informative.
+
+The signal is useful because it lines up with the intuition we already trade on. The energy-sector index gives a clean read on overall market sentiment across the oil complex; ExxonMobil’s relative performance highlights firm-specific flows that often lead crude; the lagged returns reflect the short-term mean reversion you see after sharp moves; and commercial hedging and inventory changes capture real physical-market pressure. In short, the model isn’t creating new stories.
+
 ### 3.6 Identifying a trading opportunity
+
+
 
 ### 3.7 Limitations and sources of uncertainty
 
