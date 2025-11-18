@@ -1,0 +1,17 @@
+
+
+
+
+## 1. Introduction
+
+As wannabe junior analysts on an oil trading desk, we were tasked with developing a forecasting model capable of supporting day-to-day trading decisions in the crude oil futures market. In practice traders require signals that are not only statistically grounded, but also transparent, intuitive, and directly actionable. Our objective was therefore twofold: to apply econometric tools rigorously, and to translate the resulting insights into a format suitable for a fast-paced trading environment.
+Forecasting oil prices is intrinsically challenging due to the market’s sensitivity to macroeconomic conditions, inventory dynamics, geopolitical risk, and broader financial cycles. Nevertheless, even modest predictive models when clearly interpreted can provide valuable context for position-taking, hedging, and risk management. 
+In the remainder of this report, we outline the key steps in our modelling approach. We begin by the simple trading strategy that motivated our analysis, which helped clarify the scope of our forecasting model. This led to selecting an economically meaningful dependent variable and an appropriate data frequency that aligns with practical trading horizons. We then summarise the econometric methodology used to build the model and the reasoning behind our specification choices.
+Next, we present the diagnostic tests—covering stationarity, autocorrelation, heteroskedasticity, and parameter stability—to evaluate whether the model satisfies essential assumptions. We assess its reliability through an out-of-sample forecast comparison against a naïve benchmark and highlight both the strengths and limitations revealed by this exercise. Finally, we interpret the model’s output in trading terms, showing how the signals it generates can support directional views, and we conclude by illustrating a specific trading opportunity our model forecast can assist with.
+Ultimately, our goal is not to identify the “best” forecasting model, but rather to assess which variables contain meaningful predictive information, determine how stable that information is across time, and outline how such signals could inform a simple and realistic trading rule. The results presented here are therefore designed to be both econometrically sound and operationally useful for a trader seeking to form expectations about near-term oil futures returns.
+
+## 2. Methodology
+
+
+## 3. Results
+
