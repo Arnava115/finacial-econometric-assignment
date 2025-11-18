@@ -75,7 +75,7 @@ SEASONAL_CONFIGS = [
 
 # Grid search frequency: only every N steps (higher = faster but less adaptive)
 # Set to None to do grid search only once at the beginning (fastest)
-ARIMAX_GRID_SEARCH_FREQUENCY = 50  # Changed from 20 to 50 for speed
+ARIMAX_GRID_SEARCH_FREQUENCY = None  # Changed from 20 to 50 for speed
 # Alternative: Set to None for single grid search: ARIMAX_GRID_SEARCH_FREQUENCY = None
 
 # ==================== UTILITY FUNCTIONS ====================
