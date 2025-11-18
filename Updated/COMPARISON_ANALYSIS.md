@@ -28,7 +28,7 @@ The updated notebooks (`Diagnostics.ipynb` and `model_selection.ipynb`) represen
 | **Fix Applied** | None | ✅ Added `cl1_ret_l2_squared` term |
 | **RESET p-value** | N/A | Original: 0.0164 (FAIL)<br>Improved: 0.4692 (PASS) |
 | **Autocorrelation Tests** | ✅ Ljung-Box (lags 4,8,12,24) | ✅ Breusch-Godfrey (multiple lags) |
-| **Heteroskedasticity** | ✅ ARCH test | ✅ Breusch-Pagan + White tests |
+| **Heteroskedasticity** | ✅ ARCH test | ✅ Breusch-Pagan|
 | **Normality** | ✅ Jarque-Bera | ✅ Jarque-Bera + Shapiro-Wilk |
 | **Multicollinearity** | ❌ Not tested | ✅ **VIF analysis** (all < 5) |
 | **Structural Breaks** | ❌ Not tested | ✅ **Chow test** (70% split) |
