@@ -60,10 +60,6 @@ All models are evaluated under identical real-time conditions using a consistent
 ### Model Selection
 The final forecasting model is selected based on comparative accuracy across evaluation metrics and the interpretability of the underlying specification, ensuring both statistical robustness and economic relevance.
 
-
-
-
-
 ## 3. Results
 
 ### 3.1 Overview of the models
