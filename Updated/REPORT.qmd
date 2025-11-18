@@ -13,7 +13,7 @@ To answer this, we adopt a general-to-specific econometric approach. We begin wi
 
 ## 2. Methodology
 
-## Dependant Variable Selection
+## Dependent Variable Selection
 This report forecasts log returns of the front-month WTI futures contract (CL1_ret) after comparing with two alternatives: price levels and the CL2-CL1 spread. Price levels are non-stationary with unit roots. The predictor-price relationships shift across different price regimes, causing model parameters to become unstable over time. The CL2-CL1 spread captures term structure but is less liquid and less directly tradeable. Returns (CL1_ret) are stationary and scale-invariant, ensuring consistent predictor relationships. This stability is essential for reliable forecasting models. Returns also align with how traders assess opportunities and manage risk, making forecasts directly interpretable for position sizing and performance evaluation.
 
 ## Frequency Alignment 
