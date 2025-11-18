@@ -48,6 +48,8 @@ The final forecasting model is selected based on comparative accuracy across eva
 ## 3. Results
 
 ### 3.1 Overview of the models
+
+
 ### 3.2 In-sample performance and interpretation
 ### 3.3 Diagnostic Test results
 ### 3.4 Out-of-sample forecast performance
