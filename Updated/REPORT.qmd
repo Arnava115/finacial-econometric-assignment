@@ -71,16 +71,67 @@ The final forecasting model is selected based on comparative accuracy across eva
 We began with a Generalised Unrestricted Model including all 25 predictors. The model showed limited explanatory power (adjusted R² of 4.5%) and many insignificant coefficients, indicating clear overfitting. 
 {{{table}}}
 
-The result of LASSO to reduce dimentionality resulted in 16 variables being selected. After applying an economic filter, we retained six predictors that were both statistically relevant and theoretically justified. Re-estimating the model with this reduced set produced a more parsimonious and interpretable specification, with an adjusted R² of 3.9%, consistent with the difficulty of forecasting daily oil returns.
+To reduce dimensionality, we applied LASSO with cross-validation, which selected 16 variables. After applying an economic filter, we retained six predictors that were both statistically relevant and theoretically justified. Re-estimating the model with this reduced set produced a more parsimonious and interpretable specification, with an adjusted R² of 3.9%, consistent with the difficulty of forecasting daily oil returns.
 {{{table}}}
 
+After conducting full diagnostic testing and correcting for remaining misspecification, most notably functional-form issues, we introduced a squared lag term and re-estimated the model using HAC (Newey–West) robust errors. This final specification, which included seven predictors, delivered slightly improved explanatory power (adjusted R² of 4.5%) and retained only variables with clear economic relevance. It represents the most statistically sound and parsimonious model obtained in our analysis.
+{{{table}}}
 
+### 3.2 Variable interpretation
 
+All retained predictors exhibit signs consistent with economic intuition. The positive coefficient on the Dow Jones Oil & Gas Index reflects sector-wide comovement, whereas the negative coefficient on ExxonMobil points to a relative-value dynamic in which firm-specific strength is associated with slightly weaker crude returns.
 
-### 3.2 In-sample performance and interpretation
+• Dow Jones U.S. Oil & Gas Index Returns (+)
+The positive coefficient reflects strong contemporaneous comovement between oil futures and the broader energy sector. When energy equities rally, oil prices tend to move in the same direction, indicating shared exposure to sector-wide news and risk sentiment.
+
+• ExxonMobil Returns (–)
+The negative relationship suggests a relative-value component: periods where Exxon outperforms the sector are often associated with weaker crude returns. This may reflect firm-specific shocks or hedging activities that move inversely to near-dated futures.
+
+• Second Lag of CL1 Returns (–)
+The negative coefficient on the second lag indicates mild mean reversion in front-month WTI returns. Short-term deviations tend to partially correct over a two-day horizon, consistent with microstructure noise and inventory-adjustment dynamics.
+
+• Commercial Short Positions (+)
+An increase in commercial shorts is associated with higher subsequent returns. This is consistent with hedging pressure theory, when producers sell more futures to protect themselves, someone has to buy them. Speculators step in to take the long side, and they only do it if they expect prices to rise, which pushes expected returns up.
+
+• Commercial Long Positions (–)
+The coefficient on commercial longs is symmetric: increases in long hedging (users hedging future consumption) predict slightly lower returns. Together with the commercial short-position coefficient, this indicates that net commercial hedging pressure contains predictive information.
+
+• Weekly Change in Crude Stocks (–)
+Inventory builds predict lower returns, reflecting weaker short-term demand or excess supply. This is consistent with the standard storage model: higher inventories reduce scarcity value and therefore depress futures prices.
+
+• Squared Lag of CL1 Returns (–)
+The marginal significance of the squared lag term captures a nonlinear mean-reversion effect: larger past price movements tend to reverse more sharply, indicating volatility-dependent correction dynamics.
+
 ### 3.3 Diagnostic Test results
+
+We conducted a full set of diagnostic checks to verify that the final specification met the key assumptions of linear regression and to identify any remaining issues requiring correction.
+
+**Functional Form**
+The Ramsey RESET test suggested misspecification in the post-LASSO model. Adding a nonlinear term (the squared second lag of CL1 returns) improved the functional form and mitigated omitted-variable concerns.
+
+**Autocorrelation**
+The Breusch–Godfrey test detected residual autocorrelation. Instead of modifying the model further, we applied HAC (Newey–West) robust standard errors to obtain valid inference under serial dependence.
+
+**Normality**
+Residuals showed non-normality which is common in daily return series, but this does not affect inference with HAC-robust methods. We therefore relied on robust inference rather than imposing normality.
+
+**Multicollinearity**
+Moderate collinearity appeared among sec  tor-related variables. Because collinearity affects precision rather than bias, we retained economically relevant regressors and used HAC-robust standard errors to ensure reliable inference.
+
+**Structural Stability**
+Stability tests revealed no major structural breaks, indicating that the model parameters are consistent across the sample and supporting a single-sample specification for forecasting.
+
 ### 3.4 Out-of-sample forecast performance
+
+Out-of-sample results show that the model has limited precision in predicting return magnitudes. RMSE and MAE are close to the series’ unconditional volatility, and R² is slightly negative. This is unsurprising given the challenges of forecasting daily crude returns. However, the model achieves a directional accuracy of 55.8%, noticeably above chance, indicating that the predictors carry weak but exploitable information about short-term return direction. Residuals exhibit no systematic bias, though they retain the heavy tails typical of oil markets. Overall, while level forecasts are noisy, the modest improvement in directional accuracy suggests practical value for simple trading strategies.
+{{{table}}}
+
+We conducted a model comparison to assess whether our approach offers any added forecasting or trading value over simple alternatives (naïve benchmarks). Both the OLS and ARIMAX models improve notably, with hit rates around 55–56% and positive Sharpe ratios (~0.56). Overall, the ARIMAX model performs best, delivering the highest directional accuracy (55.7%) and the strongest annualized return (18.6%).
+{{{table}}}
+
 ### 3.5 Signal quality and economic interpretation
+
 ### 3.6 Identifying a trading opportunity
+
 ### 3.7 Limitations and sources of uncertainty
 
