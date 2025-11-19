@@ -121,7 +121,7 @@ The General-to-Specific approach progressively refined the specification from 25
 
 - **CL1_ret_l2² (−):** Squared term captures non-linear reversion—larger past movements reverse more sharply than small moves, indicating volatility-dependent correction dynamics.
 
-![Distribution of forecast errors. The errors are centered near zero (good), but show fat tails (extreme errors occur more frequently than normal), highlighting the need for stop-losses.](../Hybrid/hybrid_results/figures/error_distribution.png){#fig-errors}
+![Distribution of forecast errors. The errors are centered near zero (good), but show fat tails (extreme errors occur more frequently than normal), highlighting the need for stop-losses.](../figures/error_distribution.png){#fig-errors}
 
 @fig-errors shows the distribution of forecast errors. Errors are centered near zero (good), but show fat tails—extreme errors occur more frequently than a normal distribution would predict. This confirms that extreme moves occur more frequently than the model predicts, highlighting the need for stop-losses in trading applications.
 
@@ -129,11 +129,11 @@ The General-to-Specific approach progressively refined the specification from 25
 
 Out-of-sample results show limited magnitude precision—RMSE and MAE near unconditional volatility, R² slightly negative. However, the model achieves 55.7% directional accuracy, noticeably above chance, indicating predictors carry weak but exploitable information about short-term return direction.
 
-![Time series of model forecasts vs actual returns, showing how forecasts track actual movements](../Hybrid/hybrid_results/figures/forecasts_vs_actual.png){#fig-forecasts}
+![Time series of model forecasts vs actual returns, showing how forecasts track actual movements](../figures/forecasts_vs_actual.png){#fig-forecasts}
 
 @fig-forecasts shows the out-of-sample forecasts plotted against actual returns, illustrating how the model tracks directional movements despite limited magnitude precision. The forecasts capture the general direction of price movements, though magnitude predictions remain noisy.
 
-![Scatter plots showing forecast accuracy. Points closer to the diagonal line indicate better predictions.](../Hybrid/hybrid_results/figures/forecast_scatter.png){#fig-scatter}
+![Scatter plots showing forecast accuracy. Points closer to the diagonal line indicate better predictions.](../figures/forecast_scatter.png){#fig-scatter}
 
 @fig-scatter presents scatter plots comparing forecasted versus actual returns. Points closer to the diagonal line indicate more accurate predictions. The plots reveal that while the model struggles with precise magnitude forecasting, it successfully captures directional patterns.
 
@@ -148,11 +148,11 @@ Out-of-sample results show limited magnitude precision—RMSE and MAE near uncon
 | OLS | 0.0649 | 55.0% | 0.56 | 18.2% |
 | **ARIMAX** | **0.0657** | **55.7%** | **0.56** | **18.6%** |
 
-![Visual comparison of model performance metrics (RMSE, Hit Rate, Sharpe Ratio, Annual Return)](../Hybrid/hybrid_results/figures/performance_comparison.png){#fig-performance}
+![Visual comparison of model performance metrics (RMSE, Hit Rate, Sharpe Ratio, Annual Return)](../figures/performance_comparison.png){#fig-performance}
 
 Overall, the ARIMAX model performs best, delivering the highest directional accuracy (55.7%) and the strongest annualized return (18.6%). Table @tbl-performance and Figure @fig-performance provide comprehensive performance comparisons across all models.
 
-![Cumulative returns from a simple long-only trading strategy. ARIMAX shows steady growth over the test period, outperforming other models and the naive baseline.](../Hybrid/hybrid_results/figures/cumulative_returns.png){#fig-cumulative}
+![Cumulative returns from a simple long-only trading strategy. ARIMAX shows steady growth over the test period, outperforming other models and the naive baseline.](../figures/cumulative_returns.png){#fig-cumulative}
 
 @fig-cumulative shows cumulative returns from a simple trading strategy (long when forecast positive, flat otherwise). The ARIMAX model demonstrates consistent outperformance, generating positive returns throughout the out-of-sample period while other models struggle or underperform.
 
@@ -177,7 +177,7 @@ The model provides a systematic framework for combining multiple information sou
 
 To illustrate how the model generates actionable trading signals, consider forecasting returns for the week ending March 15, 2019. At this point, the model had access to: sector momentum (Dow Jones Oil & Gas Index +2.1%), lagged returns (CL1 returned -1.5% two weeks prior, suggesting mean reversion), commercial positioning (shorts increased by 15,000 contracts), and inventory signal (crude stocks fell 2.5 million barrels). Combining these signals generated a forecast of +1.8%. This bullish signal aligned with multiple fundamental factors, and the actual return was +2.3%, confirming directional accuracy.
 
-![Trading signals over time—green areas indicate long signals, red areas indicate short/flat signals. Bottom panel shows actual returns colored by signal correctness (green = correct, red = incorrect).](../Hybrid/hybrid_results/figures/trading_signals.png){#fig-signals}
+![Trading signals over time—green areas indicate long signals, red areas indicate short/flat signals. Bottom panel shows actual returns colored by signal correctness (green = correct, red = incorrect).](../figures/trading_signals.png){#fig-signals}
 
 @fig-signals visualizes trading signals over the out-of-sample period. Green areas indicate periods where the model generated long signals (forecast > 0), while red areas indicate short/flat signals (forecast ≤ 0). The bottom panel shows actual returns colored by signal correctness, providing a visual assessment of the model's directional accuracy over time.
 
