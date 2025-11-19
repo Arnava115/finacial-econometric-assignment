@@ -1,0 +1,296 @@
+
+---
+title: "Forecasting WTI Futures Returns: A General-to-Specific Approach"
+subtitle: "Econometric Modeling for Trading Decision Support"
+author: "Group 12"
+date: "19 November 2025"
+format:
+  pdf:
+    documentclass: article
+    geometry:
+      - top=30mm
+      - left=20mm
+      - right=20mm
+      - bottom=30mm
+    fontsize: 11pt
+    linestretch: 1.5
+    fig-pos: 'H'
+    fig-cap-location: bottom
+    number-sections: true
+    toc: true
+    toc-depth: 3
+    colorlinks: true
+    linkcolor: blue
+    urlcolor: blue
+    citecolor: blue
+    keep-tex: false
+    include-in-header:
+      - text: |
+          \usepackage{booktabs}
+          \usepackage{longtable}
+          \usepackage{array}
+          \usepackage{multirow}
+          \usepackage{wrapfig}
+          \usepackage{float}
+          \usepackage{colortbl}
+          \usepackage{pdflscape}
+          \usepackage{threeparttable}
+          \usepackage{threeparttablex}
+          \usepackage{makecell}
+          \usepackage{xcolor}
+          \usepackage{graphicx}
+          \usepackage{caption}
+          \usepackage{subcaption}
+---
+\newpage
+# Executive Summary 
+
+This report develops a forecasting model for weekly WTI crude oil futures returns using a General-to-Specific approach. Starting with 25 predictors, we systematically refine the specification through LASSO, economic screening, and diagnostic testing. The final seven-variable model achieves 55.7%directional accuracy and a Sharpe ratio of 0.56 in out-of-sample testing (2019-2023), demonstrating practical value despite modest explanatory power (R²=4.5%). The methodology balances statistical rigor with economic interpretability, providing actionable signals for oil trading.
+
+# General Methodology
+
+## Target Variable Selection
+This report forecasts log returns of the front-month WTI futures contract (CL1_ret) after comparing with two alternatives: price levels and the CL2-CL1 spread. Price levels are non-stationary with unit roots, causing predictor-price relationships to shift across regimes and model parameters to become unstable. The CL2-CL1 spread captures term structure but is less liquid and less directly tradeable. Returns (CL1_ret) are stationary and scale-invariant, ensuring consistent predictor relationships essential for reliable forecasting. 
+
+## Frequency Alignment and Data Preparation
+This report uses weekly frequency to balance noise and timeliness. Daily data captures fast movements but carries heavy noise, weakening the link between predictors and returns and destabilizing models. Monthly data is cleaner but updates slowly and provides few observations, reducing statistical power and missing market shifts. Weekly data filters short-term noise while keeping signals responsive and supplying enough observations for stable estimation. Moreover, weekly timing matches how traders operate, since oil desks adjust positions after weekly inventory reports.
+
+The dataset is transformed to ensure stationarity and consistent weekly timing. Daily price series (CL1, Brent, stocks) are converted to weekly log returns using Friday closes: log(P_t / P_{t−1}). Monthly macro variables are forward-filled within each month. Non-price indicators (yields, VIX) are first-differenced to remove trends. All predictors are z-score standardized. The model includes four lags of CL1 returns and applies a one-week lag to all exogenous predictors to maintain correct information timing.
+
+The dataset follows an 80/20 split: in-sample (1995-2018) for training, out-of-sample (2019-2023) for testing. This temporal split prevents lookahead bias by ensuring models use only historical information available at forecast time, reinforced by the one-week lag on exogenous predictors.
+
+## General-to-Specific Framework 
+
+The modelling process follows the General-to-Specific (GETS) approach, which begins with a broad specification and progressively removes weak or invalid predictors to obtain a parsimonious and economically interpretable model. This approach balances the risk of omitting relevant variables (by starting broad) with the need for parsimony (through systematic reduction), ultimately producing models that are both statistically sound and economically interpretable. 
+
+**Step 1: General Unrestricted Model (GUM)**
+We begin with a GUM containing all 25 predictors, establishing a comprehensive starting point. Initial OLS estimation on the GUM reveals baseline performance and identifies potential issues.
+
+**Step 2: LASSO Regularization**
+LASSO (Least Absolute Shrinkage and Selection Operator) with cross-validation automatically shrinks weak coefficients toward zero, performing statistically-driven variable selection through L1 regularization.
+
+**Step 3: Economic Screening**
+LASSO-selected variables are filtered using economic theory. We retain only predictors with clear oil market relevance: sector momentum (Dow Jones Oil & Gas Index, ExxonMobil), supply/demand fundamentals (inventory changes, commercial positioning), and microstructure effects (lagged returns). This ensures economically meaningful rather than spuriously data-mined relationships.
+
+## Diagnostics and Model Refinement
+
+A structured diagnostic sequence verifies model validity:
+
+**Functional Form (Ramsey RESET):** Initial misspecification (p=0.016) was corrected by adding a squared lag term (cl1_ret_l2²) to capture non-linear mean-reversion, improving p-value to 0.469.
+
+**Autocorrelation (Breusch-Godfrey) & Heteroskedasticity (Breusch-Pagan):** Both tests detected violations (p<0.001). We apply HAC (Newey-West) robust standard errors to maintain valid inference.
+
+**Normality (Jarque-Bera):** Confirmed fat-tailed residuals (p<0.001), typical for financial returns. HAC methods remain valid under non-normality.
+
+**Multicollinearity (VIF):** All Variance Inflation Factors <10, indicating no severe collinearity.
+
+**Structural Stability (Chow test, Recursive Estimation):** No major structural breaks detected, supporting single-sample specification.
+
+The Final OLS model incorporates all corrections with HAC robust standard errors.
+
+## Benchmark Models and Evaluation Criterias
+
+After finalizing the specification, datasets are frozen to ensure identical inputs across comparative models:
+
+**Models Evaluated:**  
+- **OLS:** Final linear regression with selected predictors  
+- **AR(1):** Simple autoregressive baseline  
+- **ARIMAX:** Combines ARIMA structure with exogenous predictors (grid search selects optimal orders)  
+- **Random Walk (Naive):** Benchmark predicting zero return  
+
+**Forecasting Approach:** All models use expanding-window forecasts, retraining at each out-of-sample point using all available historical data. This simulates real-world continuous updating.
+
+**Evaluation Metrics:**  
+- **RMSE** (Root Mean Squared Error): Magnitude accuracy  
+- **MAE** (Mean Absolute Error): Scale-invariant accuracy  
+- **MAPE** (Mean Absolute Percentage Error): Percentage-based error  
+- **Hit Rate**: Directional accuracy (proportion correct)  
+- **Theil's U**: Ratio of model RMSE to naive forecast RMSE  
+- **Sharpe Ratio**: Risk-adjusted returns  
+- **Cumulative Return**: Trading strategy performance (long when forecast positive, flat otherwise)  
+
+**Model Selection Criteria:** Prioritize (1) directional accuracy >50%, (2) positive Sharpe ratio, (3) economic interpretability, and (4) diagnostic robustness.
+
+\newpage
+# Model Development and Performance Interpretation
+
+## Predictors Selection
+
+The General-to-Specific approach progressively refined the specification from 25 predictors to a parsimonious 7-variable model. The initial GUM showed limited explanatory power (adjusted R²=4.5%) with many insignificant coefficients. LASSO regularization reduced this to 16 variables; economic screening retained 6 core predictors (R²=3.9%). After diagnostic testing revealed functional form misspecification (Ramsey RESET p=0.016), adding a squared lag term (cl1_ret_l2²) to capture non-linear mean-reversion effects produced the final specification (R²=4.5%).
+
+**Final Model Variables (all coefficients economically intuitive):**
+
+- **Dow Jones Oil & Gas Index Returns (+):** Positive sector returns signal broad energy market strength, typically preceding crude price increases through correlated sentiment and capital flows.
+
+- **ExxonMobil Returns (−):** Negative coefficient suggests relative-value dynamics where firm-specific strength may coincide with weaker near-dated futures, possibly reflecting hedging activities or refining margin shifts.
+
+- **CL1_ret_l2 (−):** Second lag captures short-term mean reversion—price deviations tend to partially correct over two weeks, consistent with microstructure noise and inventory adjustments.
+
+- **Commercial Shorts (+):** Increased producer hedging (short positions) predicts higher returns. When producers sell more futures to hedge, speculators demand risk premium to take the long side, raising expected returns.
+
+- **Commercial Longs (−):** Inverse effect—increased consumer hedging (long positions) predicts slightly lower returns, symmetric to the shorts coefficient.
+
+- **Crude Stock Changes (−):** Inventory builds signal excess supply or weak demand, reducing scarcity value and depressing futures prices. Falling inventories have the opposite effect.
+
+- **CL1_ret_l2² (−):** Squared term captures non-linear reversion—larger past movements reverse more sharply than small moves, indicating volatility-dependent correction dynamics.
+
+## Diagnostic Validation of GUM
+
+**Functional Form (Ramsey RESET):** Adding cl1_ret_l2² corrected initial misspecification (p=0.016 → 0.469).
+
+**Autocorrelation (Breusch-Godfrey) & Heteroskedasticity (Breusch-Pagan):** Both detected violations (p<0.001). HAC (Newey-West) robust standard errors maintain valid inference under serial dependence and volatility clustering.
+
+**Normality (Jarque-Bera):** Fat-tailed residuals (p<0.001) are typical for financial returns. [Figure 1: Error Distribution] shows errors centered at zero but with heavier tails than normal distribution, confirming that extreme moves occur more frequently than the model predicts. HAC methods remain valid under non-normality.
+
+**Multicollinearity (VIF):** All Variance Inflation Factors <10, indicating no severe collinearity.
+
+**Structural Stability**
+
+Stability tests (Chow tests and recursive estimation) revealed no major structural breaks, indicating that the model parameters are consistent across the sample and supporting a single-sample specification for forecasting. However, traders should remain aware that structural breaks (e.g., shale revolution, COVID-19) may invalidate historical patterns and require model retraining.
+
+![Distribution of forecast errors. The errors are centered near zero (good), but show fat tails (extreme errors occur more frequently than normal), highlighting the need for stop-losses.](../Hybrid/hybrid_results/figures/error_distribution.png){#fig-errors}
+
+## Out-of-sample Forecast Performance Comparison
+
+Out-of-sample results show limited magnitude precision—RMSE and MAE near unconditional volatility, R² slightly negative. However, the model achieves 55.7% directional accuracy, noticeably above chance, indicating predictors carry weak but exploitable information about short-term return direction. While level forecasts are noisy, directional accuracy suggests practical value.
+
+![Time series of model forecasts vs actual returns, showing how forecasts track actual movements](../Hybrid/hybrid_results/figures/forecasts_vs_actual.png){#fig-forecasts}
+
+@fig-forecasts shows the out-of-sample forecasts plotted against actual returns, illustrating how the model tracks directional movements despite limited magnitude precision. The forecasts capture the general direction of price movements, though magnitude predictions remain noisy.
+
+![Scatter plots showing forecast accuracy. Points closer to the diagonal line indicate better predictions.](../Hybrid/hybrid_results/figures/forecast_scatter.png){#fig-scatter}
+
+@fig-scatter presents scatter plots comparing forecasted versus actual returns. Points closer to the diagonal line indicate more accurate predictions. The plots reveal that while the model struggles with precise magnitude forecasting, it successfully captures directional patterns.
+
+We conducted a model comparison to assess whether our approach offers any added forecasting or trading value over simple alternatives (naïve benchmarks). Table @tbl-performance presents the comprehensive performance comparison across all models.
+
+**Model Performance Comparison:**
+
+| Model | RMSE | Hit Rate | Sharpe Ratio | Annual Return |
+|-------|------|----------|---------------|----------------|
+| Naive | 0.0636 | 0.0% | 0.00 | 0.0% |
+| AR(1) | 0.0639 | 52.8% | -0.27 | -11.3% |
+| OLS | 0.0649 | 55.0% | 0.56 | 18.2% |
+| **ARIMAX** | **0.0657** | **55.7%** | **0.56** | **18.6%** |
+
+![Visual comparison of model performance metrics (RMSE, Hit Rate, Sharpe Ratio, Annual Return)](../Hybrid/hybrid_results/figures/performance_comparison.png){#fig-performance}
+
+Overall, the ARIMAX model performs best, delivering the highest directional accuracy (55.7%) and the strongest annualized return (18.6%). Figure @fig-performance provides a visual comparison of key performance metrics across models.
+
+![Cumulative returns from a simple long-only trading strategy. ARIMAX shows steady growth over the test period, outperforming other models and the naive baseline.](../Hybrid/hybrid_results/figures/cumulative_returns.png){#fig-cumulative}
+
+@fig-cumulative shows cumulative returns from a simple trading strategy (long when forecast positive, flat otherwise). The ARIMAX model demonstrates consistent outperformance, generating positive returns throughout the out-of-sample period while other models struggle or underperform.
+
+## Signal Quality and Economic Interpretation
+
+From a trading standpoint, the strength of this model is its ability to provide a consistent, directional edge in a market where predictive structure is notoriously limited. Across the out-of-sample period, the model delivers a 55–56% hit rate, which is materially above random and large enough to matter when applied systematically.
+
+**Directional Accuracy (55.7%):** While modest—only slightly better than a coin flip—this represents a meaningful edge. Over 307 test observations, this translates to 171 correct predictions versus 136 incorrect ones. The model's correct predictions tend to align with larger moves.
+
+**Sharpe Ratio (0.56):** Measures risk-adjusted returns. A Sharpe of 0.56 means the model generates positive returns per unit of risk. For context, the AR(1) model achieved -0.27 (destroyed value), while the naive strategy has 0.00.
+
+**Annual Return (18.6%):** Approximate return from a simple strategy going long when forecast is positive. This assumes perfect execution with no transaction costs—real-world returns will be lower.
+
+**RMSE (0.0657):** Average forecast error is 6.57% weekly. Given oil weekly volatility typically ranges 5-8%, this is reasonable. Forecasts are noisy but informative.
+
+\newpage
+# Trading Implications
+
+## Identifying a trading opportunity
+
+To illustrate how the model generates actionable trading signals, consider forecasting returns for the week ending March 15, 2019. At this point, the model has access to:
+
+- **Sector momentum:** Dow Jones Oil & Gas Index +2.1% (positive sector sentiment)
+- **Lagged returns:** CL1 returned -1.5% two weeks prior (potential mean reversion)
+- **Squared lag effect:** Captures non-linear reversion from moderate negative return
+- **Commercial positioning:** Shorts increased by 15,000 contracts (hedging pressure)
+- **Inventory signal:** Crude stocks fell 2.5 million barrels (tightening supply)
+
+Combining these signals generates a forecast of +1.8%. This bullish signal aligns with multiple fundamental factors: falling inventories (supply tightening), positive sector momentum (risk-on sentiment), and commercial hedging pressure(smart money positioning). The actual return was +2.3%, confirming directional accuracy.
+
+![Trading signals over time—green areas indicate long signals, red areas indicate short/flat signals. Bottom panel shows actual returns colored by signal correctness (green = correct, red = incorrect).](../Hybrid/hybrid_results/figures/trading_signals.png){#fig-signals}
+
+@fig-signals visualizes trading signals over the out-of-sample period. Green areas indicate periods where the model generated long signals (forecast > 0), while red areas indicate short/flat signals (forecast ≤ 0). The bottom panel shows actual returns colored by signal correctness, providing a visual assessment of the model's directional accuracy over time.
+
+### How to Use the Model Signal
+
+**Signal Interpretation:**  
+- **Forecast > 0:** Suggests long positions (buy CL1 futures)  
+- **Forecast < 0:** Suggests short positions or staying flat  
+- **Larger absolute values:** Indicate stronger conviction, though extreme forecasts (>±5%) may be less reliable  
+
+**Confidence Assessment:**  
+Check if multiple signals align:  
+- **High confidence:** If oil rallied moderately 2 weeks ago, sector returns are positive, inventories fell, and commercial positions align, a bullish forecast has higher confidence  
+- **Moderate confidence:** When some signals align but others conflict, use moderate position sizing  
+- **Low confidence:** During extreme volatility, conflicting signals, or structural breaks, reduce position size or stay flat  
+
+**Practical Application:**  
+- **Weekly rebalancing:** Update positions weekly based on new forecasts, but avoid overtrading—transaction costs matter  
+- **Position sizing:** Start small (1-2% of portfolio per trade) and scale up only if performance persists  
+- **Risk management:** Always use stop-losses (2-3% below/above entry) to manage tail risk  
+- **Signal combination:** Use alongside fundamental views, technical analysis, and macroeconomic indicators rather than in isolation  
+- **Performance monitoring:** Track hit rate and Sharpe ratio—if hit rate falls below 50% or Sharpe turns negative, consider retraining  
+
+### Practical Trading Recommendations
+
+**Position Sizing:**  
+- Start small (1-2% of portfolio per trade)
+- Scale up only if performance persists over multiple periods
+- Reduce position size during high-volatility periods (VIX > 30)
+
+**Risk Management:**  
+- Always use stop-losses (2-3% below/above entry)
+- Set maximum position size limits (e.g., 5% of portfolio)
+- Monitor drawdowns and reduce exposure if they exceed thresholds
+
+**Signal Integration:**  
+- Combine model forecasts with fundamental views, technical analysis, and macroeconomic indicators
+- Use the model as one input among many, not as the sole basis for trading decisions
+- Cross-check model signals with independent analysis
+
+**Performance Monitoring:**  
+- Track hit rate and Sharpe ratio weekly
+- If hit rate falls below 50% for 3+ months, consider retraining
+- If Sharpe ratio turns negative, reduce or halt trading until model performance improves
+- Monitor for regime changes that may invalidate historical patterns
+
+**Transaction Costs:**  
+- The reported 18.6% annual return assumes perfect execution with no transaction costs
+- Real-world returns will be lower due to:
+  - Bid-ask spreads (typically 0.01-0.05% for CL1)
+  - Commissions and fees
+  - Slippage during execution
+  - Funding costs for leveraged positions
+- Factor in transaction costs when evaluating model profitability
+
+**Expected Performance Scenarios:**
+
+- **Best case:** Model continues delivering Sharpe ~0.56 with 55-56% accuracy, generating positive risk-adjusted returns (real-world returns lower than 18.6% due to costs)
+- **Worst case:** Structural break causes underperformance—if oil market fundamentally changes, historical patterns may no longer apply, requiring retraining
+- **Realistic:** Performance likely falls between best and worst case—adds value in normal conditions but may struggle during extreme events. Monitor and adapt.
+
+## Limitations and Risk Considerations
+
+**Key Limitations:**
+The model explains only 4.5% of return variation (adjusted R²)—most weekly oil returns remain unpredictable. This is typical for financial markets but limits magnitude forecasting accuracy. Value lies in directional accuracy, not precise 
+predictions. Residuals exhibit fat tails, meaning extreme moves occur more frequently than predicted. The model may underestimate tail risk, particularly during crises or structural breaks. Despite HAC robust standard errors, some residual autocorrelation remains, suggesting the model may not fully capture all time-series dynamics.
+
+**When to Trust the Model:**
+Normal market conditions with weekly volatility 5-8%, inventory data aligning with forecasts, moderate forecast magnitudes (-3% to +3%), and aligned momentum/fundamentals/sector signals.
+
+**When to Be Cautious:**
+Extreme volatility (VIX >30), structural breaks (policy changes, supply disruptions), low liquidity periods, conflicting signals, or extreme forecasts (>±5%). During COVID-19 in March 2020, oil prices collapsed due to demand destruction—a structural break that historical patterns couldn't capture. Fundamental judgment should override model signals in such cases.
+
+Despite these limitations, the model provides a systematic framework for combining information sources into actionable forecasts. When used appropriately—with proper risk management, realistic expectations, and awareness of its limitations—it can add value to trading decisions. The model provides an edge, not a guarantee.
+
+\newpage
+# Conclusion  
+
+This report demonstrates that a General-to-Specific econometric approach produces a parsimonious, economically interpretable forecasting model for weekly WTI returns. Through systematic reduction from 25 to 7 predictors, the final specification achieves 55.7% directional accuracy and positive risk-adjusted returns (Sharpe 0.56), despite explaining only 4.5% of return variation.
+
+Key findings are threefold. First, the GETS methodology identified meaningful directional accuracy—materially above random—highlighting that modest predictive edges can be valuable when applied systematically. Second, the model's predictors align with fundamental oil market dynamics: sector momentum, commercial hedging pressure, inventory changes, and non-linear effects, ensuring actionable signals rather than black-box predictions. Third, comprehensive diagnostic testing—particularly adding a squared lag term—ensures statistical validity.
+
+The model's practical value lies in synthesizing multiple information sources into directional forecasts. When signals align, the model generates higher-confidence predictions for position sizing. However, limitations remain: modest explanatory power, fat-tailed residuals, and regime dependence require careful risk management.
+
+For traders, this model offers a systematic framework combining momentum, fundamental, and positioning signals. The 55.7% hit rate and positive Sharpe ratio suggest practical value when used with proper risk management, emphasizing both statistical rigor and economic interpretability to ensure transparent, defensible signals.
